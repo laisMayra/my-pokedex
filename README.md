@@ -155,27 +155,35 @@ Descrição: Retorna ranking global de colecionadores
   - Callback URLs: Domínio do frontend
 
 ## 🗄️ Modelos de Dados
-### PokemonsTable Schema:
-┌───────────────┬─────────────┬─────────────────────────────────────┐
-│   Atributo    │    Tipo     │            Descrição                │
-├───────────────┼─────────────┼─────────────────────────────────────┤
-│   userId      │   String    │  Partition Key (sub do Cognito)     │
-│   pokemonId   │   Number    │  Sort Key (ID do Pokémon)           │
-│  pokemonName  │   String    │  Nome do Pokémon                    │
-│    sprite     │   String    │  URL da imagem oficial              │
-│     types     │   String    │  Tipo(s) do Pokémon                 │
-│  capturedAt   │   String    │  Data/hora da captura               │
-│ isLegendary   │   String    │  Indica se é lendário ("true/false")│
-│  isMythical   │   String    │  Indica se é mítico ("true/false")  │
-└───────────────┴─────────────┴─────────────────────────────────────┘
+### 📋 PokemonsTable Schema
+```sql
+Table: PokemonsTable
+Partition Key: userId (String)
+Sort Key: pokemonId (Number)
+```
 
-### UserRankingsTable Schema
-┌───────────────┬─────────┬────────────────────────────────────┐
-│   Atributo    │  Tipo   │            Descrição               │
-├───────────────┼─────────┼────────────────────────────────────┤
-│    userId     │ String  │  Partition Key                     │
-│   userName    │ String  │  Nome do usuário                   │
-│   userEmail   │ String  │  Email do usuário                  │
-│  pokemonCount │ Number  │  Quantidade de Pokémon capturados  │
-│ lastActivity  │ String  │  Data/hora da última atividade     │
-└───────────────┴─────────┴────────────────────────────────────┘
+| Atributo | Tipo | Descrição |
+|----------|------|-----------|
+| **userId** | String | Partition Key (sub do Cognito) |
+| **pokemonId** | Number | Sort Key (ID do Pokémon) |
+| **pokemonName** | String | Nome do Pokémon |
+| **sprite** | String | URL da imagem oficial |
+| **types** | String | Tipo(s) do Pokémon |
+| **capturedAt** | String | Data/hora da captura (ISO 8601) |
+| **isLegendary** | String | Indica se é lendário (`"true"`/`"false"`) |
+| **isMythical** | String | Indica se é mítico (`"true"`/`"false"`) |
+
+### 📊 UserRankingsTable Schema
+
+```sql
+Table: UserRankingsTable
+Partition Key: userId (String)
+```
+
+| Atributo | Tipo | Obrigatório | Descrição |
+|----------|------|-------------|-----------|
+| **userId** | String | ✅ | ID único do usuário (Cognito sub) |
+| **userName** | String | ✅ | Nome de exibição do usuário |
+| **userEmail** | String | ✅ | Email do usuário |
+| **pokemonCount** | Number | ✅ | Total de Pokémon na coleção |
+| **lastActivity** | String | ✅ | Timestamp da última atividade (ISO 8601) |
