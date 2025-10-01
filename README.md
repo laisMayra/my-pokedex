@@ -1,7 +1,7 @@
-📋 # myPokedex
+# 📋 myPokedex
 Backend completo para o sistema de coleção de Pokémon, construído com AWS Serverless Application Model (SAM).
 
-📋 ## Sobre o Projeto
+## 📋 Sobre o Projeto
 Backend serverless que fornece APIs seguras para gerenciamento de coleção de Pokémon, com autenticação via Cognito e armazenamento em DynamoDB.
 
 ## Serviços AWS Utilizados
@@ -12,7 +12,7 @@ Backend serverless que fornece APIs seguras para gerenciamento de coleção de P
 - Lambda Layers - Dependências compartilhadas
 - CloudWatch - Logs e monitoramento
 
-📁 ## Estrutura do Projeto
+## 📁 Estrutura do Projeto
 backend/
 ├── template.yaml              # Template SAM principal
 ├── functions/                 # Lambda functions
@@ -33,7 +33,7 @@ backend/
 └── README.md
 
 
-🚀 ## Deployment
+## 🚀 Deployment
 ### Pré-requisitos
 - AWS CLI configurado com credenciais
 - SAM CLI instalado
@@ -61,11 +61,11 @@ sam deploy --guided
 sam build && sam deploy
 ```
 
-📝 ## DynamoDB Tables
+## 📝 DynamoDB Tables
 - PokemonsTable - Armazena coleção de Pokémon por usuário
 - UserRankingsTable - Armazena ranking de usuários
 
-🔧 ## Recursos Criados
+## 🔧 Recursos Criados
 
 ### Lambda Functions
 - AddPokemonFunction - POST /pokemon (autenticado)
@@ -81,17 +81,20 @@ sam build && sam deploy
 ### Lambda Layer
 - CommonModulesLayer - Dependências compartilhadas entre funções
 
-📡 ## Endpoints da API
+## 📡 Endpoints da API
 Base URL: https://{api-id}.execute-api.{region}.amazonaws.com/Prod
 
 ### POST /pokemon
 Autenticação: ✅ Requer Bearer Token JWT
 Descrição: Adiciona Pokémon à coleção do usuário
+```json
 Request:
 {
   "name": "pikachu"
 }
+```
 Response:
+```json
 {
     "pokemonId": 25,
     "pokemonName": "pikachu",
@@ -100,11 +103,13 @@ Response:
     "isLegendary": false,
     "isMythical": false
 }
+```
 
 ### GET /pokemon
 Autenticação: ✅ Requer Bearer Token JWT
 Descrição: Retorna todos os Pokémon do usuário autenticado
 Response:
+```json
 [
   {
     "pokemonId": 25,
@@ -116,10 +121,12 @@ Response:
     "capturedAt": "2025-10-01T13:32:00.438Z"
   }
 ]
+```
 
 ### GET /ranking
 Autenticação: ✅ Requer Bearer Token JWT
 Descrição: Retorna ranking global de colecionadores
+```json
 {
     "rankings": [
         {
@@ -134,8 +141,9 @@ Descrição: Retorna ranking global de colecionadores
     "totalUsers": 1,
     "timestamp": "2025-10-01T13:34:27.750Z"
 }
+```
 
-🔐 ## Autenticação
+## 🔐 Autenticação
 ### Configuração do Cognito
 - User Pool com atributos customizados:
   - email (required, verified)
@@ -146,7 +154,7 @@ Descrição: Retorna ranking global de colecionadores
   - OpenID Connect scopes: openid, email, phone
   - Callback URLs: Domínio do frontend
 
-🗄️ ## Modelos de Dados
+## 🗄️ Modelos de Dados
 ### PokemonsTable Schema:
 ┌───────────────┬─────────────┬─────────────────────────────────────┐
 │   Atributo    │    Tipo     │            Descrição                │
