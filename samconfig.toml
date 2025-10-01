@@ -1,0 +1,35 @@
+# More information about the configuration file can be found here:
+# https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-config.html
+version = 0.1
+
+[default.global.parameters]
+stack_name = "myPokedex"
+
+[default.build.parameters]
+cached = true
+parallel = true
+
+[default.validate.parameters]
+lint = true
+
+[default.deploy.parameters]
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = true
+resolve_s3 = true
+stack_name = "pokedex-backend"
+s3_prefix = "pokedex-backend"
+region = "us-east-1"
+image_repositories = []
+parameter_overrides = "CognitoUserPoolId=\"us-east-1_Xu0vt4UHQ\" CognitoUserPoolClientId=\"7u6qmdjb51c3nv3f4u09lkveg9\" CognitoUserPoolArn=\"arn:aws:cognito-idp:us-east-1:586098609412:userpool/us-east-1_Xu0vt4UHQ\" FrontendDomain=\"https://main.d14z7uvcdhqis4.amplifyapp.com\""
+
+[default.package.parameters]
+resolve_s3 = true
+
+[default.sync.parameters]
+watch = true
+
+[default.local_start_api.parameters]
+warm_containers = "EAGER"
+
+[default.local_start_lambda.parameters]
+warm_containers = "EAGER"

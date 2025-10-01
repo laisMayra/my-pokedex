@@ -1,0 +1,208 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+  CognitoUserPoolId:
+    Type: String
+    Description: ID do User Pool existente
+  CognitoUserPoolClientId:
+    Type: String
+    Description: ID do User Pool Client existente
+  CognitoUserPoolArn:
+    Type: String
+    Description: ARN do User Pool existente
+  FrontendDomain:
+    Type: String
+    Description: Domínio do frontend autorizado para CORS
+
+Globals:
+  Function:
+    Timeout: 30
+    Runtime: nodejs18.x
+
+Resources:
+  ########################################
+  # Lambda Layer
+  ########################################
+  CommonModulesLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: common-modules
+      Description: Common modules for Pokedex functions
+      ContentUri: layers/commonModules/  # Caminho para sua layer
+      CompatibleRuntimes:
+        - nodejs18.x
+      RetentionPolicy: Retain
+
+  ########################################
+  # DynamoDB Tables
+  ########################################
+  PokemonsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: PokemonsTable
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: pokemonId
+          AttributeType: N
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        - AttributeName: pokemonId
+          KeyType: RANGE
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE  # Habilita DynamoDB Stream
+
+  UserRankingsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: UserRankingsTable
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+
+  ########################################
+  # API Gateway
+  ########################################
+  PokedexApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: Prod
+      CorsConfiguration:
+        AllowOrigins:
+          - "http://localhost:8080"
+          - !Ref FrontendDomain
+        AllowHeaders:
+          - "Authorization"
+          - "Content-Type"
+        AllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+      Auth:
+        Authorizers:
+          CognitoAuthorizer:
+            JwtConfiguration:
+              issuer: !Sub "https://cognito-idp.${AWS::Region}.amazonaws.com/${CognitoUserPoolId}"
+              audience:
+                - !Ref CognitoUserPoolClientId
+            IdentitySource: "$request.header.Authorization"
+        DefaultAuthorizer: CognitoAuthorizer
+
+  ########################################
+  # Lambda: AddPokemon
+  ########################################
+  AddPokemonFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/addPokemon/
+      Handler: app.handler
+      Layers:
+        - !Ref CommonModulesLayer  # Referência para a layer
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref PokemonsTable
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref PokemonsTable
+      Events:
+        AddPokemon:
+          Type: HttpApi
+          Properties:
+            Path: /pokemon
+            Method: post
+            ApiId: !Ref PokedexApi
+
+  ########################################
+  # Lambda: GetPokemons
+  ########################################
+  GetPokemonsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/getPokemons/
+      Handler: app.handler
+      Layers:
+        - !Ref CommonModulesLayer  # Referência para a layer
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref PokemonsTable
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref PokemonsTable
+      Events:
+        GetPokemons:
+          Type: HttpApi
+          Properties:
+            Path: /pokemon
+            Method: get
+            ApiId: !Ref PokedexApi
+
+  ########################################
+  # Lambda: Update Ranking (DynamoDB Stream Trigger)
+  ########################################
+  UpdateRankingFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/updateRanking/
+      Handler: app.handler
+      Layers:
+        - !Ref CommonModulesLayer  # Referência para a layer
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UserRankingsTable
+        - Statement:
+          - Effect: Allow
+            Action:
+              - cognito-idp:AdminGetUser
+            Resource: !Ref CognitoUserPoolArn
+      Environment:
+        Variables:
+          RANKINGS_TABLE: !Ref UserRankingsTable
+          USER_POOL_ID: !Ref CognitoUserPoolId
+      Events:
+        DynamoDBStream:
+          Type: DynamoDB
+          Properties:
+            Stream: !GetAtt PokemonsTable.StreamArn
+            BatchSize: 1
+            StartingPosition: LATEST
+
+  ########################################
+  # Lambda: Get Ranking (API)
+  ########################################
+  GetRankingFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/getRanking/
+      Handler: app.handler
+      Layers:
+        - !Ref CommonModulesLayer  # Referência para a layer
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref UserRankingsTable
+      Environment:
+        Variables:
+          RANKINGS_TABLE: !Ref UserRankingsTable
+      Events:
+        GetRanking:
+          Type: HttpApi
+          Properties:
+            Path: /ranking
+            Method: get
+            ApiId: !Ref PokedexApi
+
+Outputs:
+  ApiUrl:
+    Value: !Sub "https://${PokedexApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+
+  CommonModulesLayerArn:
+    Description: ARN da Lambda Layer
+    Value: !Ref CommonModulesLayer
